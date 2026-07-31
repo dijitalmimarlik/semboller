@@ -414,7 +414,7 @@
   <!-- 1. Üst Başlık Çubuğu (Navbar) -->
   <header class="top-navbar">
     <div class="navbar-brand">
-      <span></span> İMÜ İslam Tarihi ve Sanatları
+      <span></span> İMÜ İslam Tarihi ve Sanatları Veri Tabanı
     </div>
     <ul class="navbar-nav">
       <li><a href="#">Ana Sayfa</a></li>
@@ -630,7 +630,7 @@
         li.textContent = building.name;
         
         li.onclick = () => {
-          map.flyTo(building.coords, 15, {
+          map.flyTo(building.coords, 17, {
             animate: true,
             duration: 1.2 
           });
@@ -709,7 +709,7 @@
       // scale: 3 parametresi görüntünün 3 kat yüksek çözünürlükte (yaklaşık 300dpi kalitesinde) render edilmesini sağlar.
       html2canvas(mapElement, {
         useCORS: true,       // Harici harita sağlayıcısından gelen görsellerin (tile) işlenmesine izin verir
-        scale: 5,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
+        scale: 3,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
         backgroundColor: null 
       }).then(canvas => {
         const link = document.createElement('a');
