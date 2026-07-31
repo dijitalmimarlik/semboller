@@ -201,11 +201,6 @@
       gap: 6px;
     }
 
-    .status-badge.live {
-      background: #f0fdf4;
-      color: #15803d;
-    }
-
     /* 📌 3. Yapı Listesi Paneli */
     .list-panel {
       background: rgba(255, 255, 255, 0.92);
@@ -318,8 +313,8 @@
     }
 
     .custom-marker svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       fill: var(--marker-color);
     }
 
@@ -336,7 +331,6 @@
       background: #ffffff;
     }
 
-    /* Yeni Eklenen Tooltip (Üzerine Gelince Çıkan İsim) Stili */
     .leaflet-tooltip {
       font-family: 'Inter', sans-serif;
       font-weight: 600;
@@ -363,6 +357,7 @@
 
     .badge-container {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
       margin-bottom: 8px;
     }
@@ -375,9 +370,10 @@
       text-transform: uppercase;
     }
 
-    .badge-dini { background: #fef3c7; color: #92400e; }
-    .badge-askeri { background: #fee2e2; color: #991b1b; }
-    .badge-sivil { background: #e0f2fe; color: #075985; }
+    /* Kategori Renkleri */
+    .badge-kandil { background: #fef3c7; color: #b45309; }
+    .badge-kus { background: #e0f2fe; color: #0369a1; }
+    .badge-meyve { background: #dcfce7; color: #15803d; }
 
     .building-card h3 {
       font-size: 1rem;
@@ -423,7 +419,7 @@
 </head>
 <body>
 
-  <!-- 1. Üst Başlık Çubuğu (Navbar) -->
+  <!-- 1. Üst Başlık Çubuğu -->
   <header class="top-navbar">
     <div class="navbar-brand">
       <span></span> İMÜ İslam Tarihi ve Sanatları
@@ -434,7 +430,7 @@
     </ul>
   </header>
 
-  <!-- Sol Taraf Yüzen Alan (Bilgi Kutusu + Filtreler + Liste) -->
+  <!-- Sol Taraf Yüzen Alan -->
   <div class="sidebar-container">
     
     <!-- 2. Bilgi Kutusu -->
@@ -448,35 +444,33 @@
     <div class="filter-panel">
       <h2>🏛️ Envanter Filtrele</h2>
       
-      <!-- Hata/Yükleniyor durumu için ayrıldı, başarılı olunca JS ile gizlenecek -->
       <div id="statusIndicator" class="status-badge">
         ⏳ Veriler yükleniyor...
       </div>
 
+      <!-- Görünüm Modu Seçimi -->
       <div class="filter-group">
-        <label for="periodSelect">Tarih / Dönem</label>
-        <select id="periodSelect" class="filter-select">
-          <option value="all">Tüm Dönemler</option>
-          <option value="bizans">Bizans Dönemi</option>
-          <option value="osmanli">Osmanlı Dönemi</option>
-          <option value="ceneviz">Ceneviz Dönemi</option>
+        <label for="viewModeSelect">Görünüm Modu</label>
+        <select id="viewModeSelect" class="filter-select">
+          <option value="marker">📍 Noktasal (Marker)</option>
+          <option value="heatmap">🔥 Isı Haritası</option>
         </select>
       </div>
 
+      <!-- Sembol Tipi Seçimi (TEK FİLTRE) -->
       <div class="filter-group">
-        <label for="typeSelect">Yapı Türü</label>
-        <select id="typeSelect" class="filter-select">
-          <option value="all">Tüm Yapı Türleri</option>
-          <option value="dini">Dini Yapılar (Cami / Kilise)</option>
-          <option value="askeri">Askeri / Gözetleme</option>
-          <option value="sivil">Sivil / Kamu / Anıt</option>
+        <label for="symbolSelect">Sembollere Göre Filtrele</label>
+        <select id="symbolSelect" class="filter-select">
+          <option value="all">Tüm Semboller</option>
+          <option value="kandil">Kandil</option>
+          <option value="kus">Kuş</option>
+          <option value="meyve">Meyve</option>
         </select>
       </div>
     </div>
 
     <!-- 3. Yapı Listesi Paneli -->
     <div class="list-panel">
-      <!-- ID eklendi, sayı JS ile buraya yazdırılacak -->
       <h2 id="listHeading">📍 Görüntülenen Yapılar: 0 Adet</h2>
       <ul id="buildingList" class="building-list">
         <!-- JS ile dinamik olarak doldurulacak -->
@@ -497,82 +491,94 @@
   <!-- Harita Konteyneri -->
   <div id="map"></div>
 
-  <!-- Leaflet JS -->
+  <!-- Kütüphaneler -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- PapaParse CSV Parser JS -->
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <!-- html2canvas JS (Ekran Görüntüsü İçin) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
-    // 🔗 GOOGLE SHEETS YAYINLANMIŞ CSV BAĞLANTISI
+    // GOOGLE SHEETS CSV URL (Kendi linkinizle değiştirebilirsiniz)
     const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv';
 
-    // 1. Haritayı Başlat (TÜRKİYE MERKEZLİ - KOORDİNATLAR GÜNCELLENDİ)
     const map = L.map('map', { 
   zoomControl: false, 
   attributionControl: false // Sağ alttaki yazıları ve linkleri tamamen kapatır
 }).setView([39.0, 35.2], 6);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // 2. Aydınlık ve Sade Altlık (CartoDB Positron)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   maxZoom: 19,
   subdomains: 'abcd'
 }).addTo(map);
 
-    // 3. SVG İkon Kütüphanesi
+    // Kategori ve Sembol Ayarları
     const categoryConfig = {
-      dini: {
-        color: '#d97706',
-        label: 'Dini Yapı',
-        svg: `<svg viewBox="0 0 24 24"><path d="M12 2L10 5H14L12 2ZM12 6C7 6 4 10 4 15V21H20V15C20 10 17 6 12 6ZM12 18C10.9 18 10 17.1 10 16C10 14.9 10.9 14 12 14C13.1 14 14 14.9 14 16C14 17.1 13.1 18 12 18Z"/></svg>`
+      kandil: {
+        color: '#f59e0b',
+        label: 'Kandil',
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 2L10 5H14L12 2ZM8 6H16L17.5 14H6.5L8 6ZM11 15H13V20H11V15Z"/></svg>`
       },
-      askeri: {
-        color: '#dc2626',
-        label: 'Askeri Yapı',
-        svg: `<svg viewBox="0 0 24 24"><path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"/></svg>`
+      kus: {
+        color: '#0ea5e9',
+        label: 'Kuş',
+        svg: `<svg viewBox="0 0 24 24"><path d="M21 11.5C21 11.5 19.5 9 16.5 9C14.7 9 13.1 9.9 12 11.3C10.9 9.9 9.3 9 7.5 9C4.5 9 3 11.5 3 11.5C3 11.5 5 14.5 8 14.5C9.3 14.5 10.5 13.9 11.3 13L12 12.1L12.7 13C13.5 13.9 14.7 14.5 16 14.5C19 14.5 21 11.5 21 11.5Z"/></svg>`
       },
-      sivil: {
-        color: '#0284c7',
-        label: 'Sivil Mimari',
-        svg: `<svg viewBox="0 0 24 24"><path d="M12 3L2 12H5V20H19V12H22L12 3ZM12 8.75C13.24 8.75 14.25 9.76 14.25 11C14.25 12.24 13.24 13.25 12 13.25C10.76 13.25 9.75 12.24 9.75 11C9.75 9.76 10.76 8.75 12 8.75Z"/></svg>`
+      meyve: {
+        color: '#10b981',
+        label: 'Meyve',
+        svg: `<svg viewBox="0 0 24 24"><path d="M15.5 3C15.5 3 14 3 12 5C10 3 8.5 3 8.5 3C6 3 4 5 4 8C4 13 12 21 12 21C12 21 20 13 20 8C20 5 18 3 15.5 3Z"/></svg>`
+      },
+      // Birden fazla sembolü olan yapılar için "Katmanlar" ikonu
+      karma: {
+        color: '#8b5cf6', // Mor renk
+        label: 'Çoklu Sembol',
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17L22 12L12 17L2 12L2 17Z"/></svg>`
       }
     };
 
-    // Yedek / Örnek Veri Seti
+    // Örnek Veri Seti (Ayasofya örneği Çoklu Sembol yapıldı)
     const fallbackBuildings = [
       {
         id: 1,
         name: "Ayasofya-i Kebir Cami-i Şerifi",
-        period: "bizans",
-        type: "dini",
+        type: ["kandil", "kus"], // ÇOKLU SEMBOL ÖRNEĞİ
         coords: [41.0086, 28.9802],
         year: "İnşa: M.S. 537",
-        desc: "Bizans İmparatoru I. Justinianus tarafından yaptırılan, mimarlık tarihinin başyapıtlarından biri.",
+        desc: "İçerisinde tarihi kandil motifleri ve dış mimarisinde kuş evleri bulunduran anıtsal yapı.",
         image: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=400&q=80",
-        url: "https://tr.wikipedia.org/wiki/Ayasofya"
+        url: "#"
       },
       {
         id: 2,
         name: "Galata Kulesi",
-        period: "ceneviz",
-        type: "askeri",
+        type: ["kus"],
         coords: [41.0256, 28.9744],
         year: "İnşa: M.S. 1348",
-        desc: "Cenevizliler tarafından Galata surlarının bir parçası ve gözetleme kulesi olarak inşa edilmiştir.",
+        desc: "Kuş bakışı İstanbul manzarasına sahip tarihi gözetleme kulesi.",
         image: "https://images.unsplash.com/photo-1527838832700-54595d2f408e?auto=format&fit=crop&w=400&q=80",
-        url: "https://tr.wikipedia.org/wiki/Galata_Kulesi"
+        url: "#"
+      },
+      {
+        id: 3,
+        name: "Topkapı Sarayı Yemiş Odası",
+        type: ["meyve"],
+        coords: [41.0115, 28.9833],
+        year: "İnşa: 1705",
+        desc: "Duvarlarında çeşitli meyve freskleri bulunan özel tasarımlı oda.",
+        image: "https://images.unsplash.com/photo-1582879304171-82fd426fb63e?auto=format&fit=crop&w=400&q=80",
+        url: "#"
       }
     ];
 
     let buildingsData = [];
     let markerGroup = L.layerGroup().addTo(map);
     let markersMap = {}; 
+    let heatLayer; 
 
-    // 4. Özel İkon Fonksiyonu
-    function createCustomIcon(type) {
-      const config = categoryConfig[type] || categoryConfig.sivil;
+    // Özel İkon Üretici
+    function createCustomIcon(typeKey) {
+      const config = categoryConfig[typeKey] || categoryConfig.kandil;
       return L.divIcon({
         className: 'custom-icon-wrapper',
         html: `
@@ -582,69 +588,97 @@
         `,
         iconSize: [36, 36],
         iconAnchor: [18, 18],
-        popupAnchor: [0, -18] // Tıklandığında açılan Pop-Up'ın mesafesi
+        popupAnchor: [0, -18]
       });
     }
 
-    // 5. Marker Çizme & Filtreleme & Listeyi Güncelleme
+    // Haritayı Çizdirme (Marker veya Heatmap)
     function renderMarkers() {
+      // Temizlik İşlemleri
       markerGroup.clearLayers();
+      if (heatLayer) {
+        map.removeLayer(heatLayer);
+      }
       markersMap = {}; 
 
-      const selectedPeriod = document.getElementById('periodSelect').value;
-      const selectedType = document.getElementById('typeSelect').value;
+      const viewMode = document.getElementById('viewModeSelect').value;
+      const selectedSymbol = document.getElementById('symbolSelect').value;
 
+      // Filtreleme (Çoklu sembol array mantığına göre)
       let filtered = buildingsData.filter(b => {
-        const periodMatch = (selectedPeriod === 'all') || (b.period === selectedPeriod);
-        const typeMatch = (selectedType === 'all') || (b.type === selectedType);
-        return periodMatch && typeMatch;
+        return (selectedSymbol === 'all') || b.type.includes(selectedSymbol);
       });
 
       filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-      filtered.forEach(building => {
-        const config = categoryConfig[building.type] || categoryConfig.sivil;
-        
-        const popupContent = `
-          <div class="building-card">
-            ${building.image ? `<img src="${building.image}" alt="${building.name}">` : ''}
-            <div class="badge-container">
-              <span class="badge badge-${building.type}">${config.label}</span>
+      // 📍 MARKER MODU
+      if (viewMode === 'marker') {
+        filtered.forEach(building => {
+          
+          // Yapıda birden fazla sembol varsa "karma" ikonunu kullan
+          const isMulti = building.type.length > 1;
+          const mainIconType = isMulti ? 'karma' : building.type[0];
+          
+          // Pop-up için yapının tüm sembollerine ait rozetleri (badge) oluştur
+          const badgesHTML = building.type.map(t => {
+            const cfg = categoryConfig[t];
+            return cfg ? `<span class="badge badge-${t}">${cfg.label}</span>` : '';
+          }).join('');
+          
+          const popupContent = `
+            <div class="building-card">
+              ${building.image ? `<img src="${building.image}" alt="${building.name}">` : ''}
+              <div class="badge-container">
+                ${badgesHTML}
+              </div>
+              <h3>${building.name}</h3>
+              <div class="year">${building.year}</div>
+              <p>${building.desc}</p>
+              <a href="${building.url}" target="_blank" rel="noopener noreferrer">
+                Devamını Oku &rarr;
+              </a>
             </div>
-            <h3>${building.name}</h3>
-            <div class="year">${building.year}</div>
-            <p>${building.desc}</p>
-            <a href="${building.url}" target="_blank" rel="noopener noreferrer">
-              Devamını Oku &rarr;
-            </a>
-          </div>
-        `;
+          `;
 
-        // 🎯 YENİ EKLENEN KISIM: bindTooltip ile üzerine gelince ismi gösterme
-        const marker = L.marker(building.coords, {
-          icon: createCustomIcon(building.type)
-        })
-        .bindTooltip(building.name, {
-          direction: 'top',   // İkonun üstünde belirmesi için
-          offset: [0, -20]    // İkona değmemesi için biraz yukarı kaydırıldı
-        })
-        .bindPopup(popupContent);
+          const marker = L.marker(building.coords, {
+            icon: createCustomIcon(mainIconType)
+          })
+          .bindTooltip(building.name, {
+            direction: 'top',
+            offset: [0, -20]
+          })
+          .bindPopup(popupContent);
 
-        markerGroup.addLayer(marker);
-        markersMap[building.id] = marker; 
-      });
+          markerGroup.addLayer(marker);
+          markersMap[building.id] = marker; 
+        });
 
-      updateBuildingList(filtered);
+      } 
+      // 🔥 ISI HARİTASI MODU
+      else if (viewMode === 'heatmap') {
+        const heatPoints = [];
+        filtered.forEach(building => {
+          heatPoints.push([building.coords[0], building.coords[1], 1]);
+          markersMap[building.id] = building; 
+        });
+        
+        heatLayer = L.heatLayer(heatPoints, {
+          radius: 25,
+          blur: 15, 
+          maxZoom: 10,
+          gradient: {0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red'}
+        }).addTo(map);
+      }
+
+      updateBuildingList(filtered, viewMode);
     }
 
-    // 6. Sol Menüdeki Listeyi Oluşturan ve Sayıyı Güncelleyen Fonksiyon
-    function updateBuildingList(buildings) {
+    // Sol Listeyi Güncelleme
+    function updateBuildingList(buildings, viewMode) {
       const listContainer = document.getElementById('buildingList');
       const listHeading = document.getElementById('listHeading');
       
       listContainer.innerHTML = ''; 
-
-      // Başlıktaki sayı güncelleniyor
       listHeading.innerHTML = `📍 Görüntülenen Yapılar: ${buildings.length} Adet`;
 
       if (buildings.length === 0) {
@@ -662,24 +696,25 @@
             duration: 1.2 
           });
           
-          setTimeout(() => {
-            if(markersMap[building.id]) {
-              markersMap[building.id].openPopup();
-            }
-          }, 1250); 
+          if (viewMode === 'marker') {
+            setTimeout(() => {
+              if(markersMap[building.id]) {
+                markersMap[building.id].openPopup();
+              }
+            }, 1250); 
+          }
         };
         
         listContainer.appendChild(li);
       });
     }
 
-    // 7. Google Sheets Verisini Çekme (Başarılı yüklemede uyarıyı gizler)
+    // Excel (CSV) Verisi Çekme Fonksiyonu
     function fetchGoogleSheetsData() {
       const statusEl = document.getElementById('statusIndicator');
 
       if (!GOOGLE_SHEETS_CSV_URL) {
-        console.warn("Google Sheets CSV URL'si tanımlanmadı. Örnek veriler gösteriliyor.");
-        statusEl.innerHTML = "💡 Örnek Modu (Sheet Bağlanmadı)";
+        statusEl.innerHTML = "💡 Örnek Modu";
         buildingsData = fallbackBuildings;
         renderMarkers();
         return;
@@ -691,51 +726,50 @@
         skipEmptyLines: true,
         complete: function(results) {
           if (results.data && results.data.length > 0) {
-            buildingsData = results.data.map((row, index) => ({
-              id: index + 1, 
-              name: row.name ? row.name.trim() : 'İsimsiz Yapı',
-              period: row.period ? row.period.trim().toLowerCase() : 'diğer',
-              type: row.type ? row.type.trim().toLowerCase() : 'sivil',
-              coords: [parseFloat(row.lat), parseFloat(row.lng)],
-              year: row.year ? row.year.trim() : '',
-              desc: row.desc ? row.desc.trim() : '',
-              image: row.image ? row.image.trim() : '',
-              url: row.url ? row.url.trim() : '#'
-            })).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
+            buildingsData = results.data.map((row, index) => {
+              
+              // Veriyi virgüllerden ayırıp diziye (array) çevirir (Örn: "kandil, kus")
+              const typesArray = row.type ? row.type.toLowerCase().split(',').map(s => s.trim()) : ['kandil'];
 
-            // Veri başarıyla yüklendiğinde yükleniyor yazısını/kutusunu gizle
+              return {
+                id: index + 1, 
+                name: row.name ? row.name.trim() : 'İsimsiz Yapı',
+                type: typesArray, // Artık bir dizi olarak saklanıyor
+                coords: [parseFloat(row.lat), parseFloat(row.lng)],
+                year: row.year ? row.year.trim() : '',
+                desc: row.desc ? row.desc.trim() : '',
+                image: row.image ? row.image.trim() : '',
+                url: row.url ? row.url.trim() : '#'
+              };
+            }).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
+
             statusEl.style.display = 'none';
             renderMarkers();
           } else {
-            // Hata durumunda görünür yap
             statusEl.style.display = 'flex';
-            statusEl.innerHTML = "⚠️ Tablo Boş veya Okunamadı";
+            statusEl.innerHTML = "⚠️ Tablo Boş";
             buildingsData = fallbackBuildings;
             renderMarkers();
           }
         },
         error: function(err) {
-          console.error("Google Sheets Okuma Hatası:", err);
-          // Hata durumunda görünür yap
+          console.error("Hata:", err);
           statusEl.style.display = 'flex';
-          statusEl.innerHTML = "❌ Canlı Veri Bağlantı Hatası";
+          statusEl.innerHTML = "❌ Canlı Veri Hatası";
           buildingsData = fallbackBuildings;
           renderMarkers();
         }
       });
     }
 
-    // 8. Haritayı Yüksek Çözünürlüklü Kaydetme Fonksiyonu
+    // Harita İndirme İşlevi
     document.getElementById('downloadMapBtn').addEventListener('click', function() {
       const btn = this;
       const originalHTML = btn.innerHTML;
-      
       btn.innerHTML = '⏳ İşleniyor...';
       btn.style.pointerEvents = 'none';
 
-      const mapElement = document.getElementById('map');
-
-      html2canvas(mapElement, {
+      html2canvas(document.getElementById('map'), {
         useCORS: true,       
         scale: 3,            
         backgroundColor: null 
@@ -748,19 +782,18 @@
         btn.innerHTML = originalHTML;
         btn.style.pointerEvents = 'auto';
       }).catch(err => {
-        console.error('Ekran görüntüsü alınamadı:', err);
-        alert('Harita kaydedilirken bir hata oluştu.');
-        
+        console.error('Hata:', err);
+        alert('Kaydedilirken hata oluştu.');
         btn.innerHTML = originalHTML;
         btn.style.pointerEvents = 'auto';
       });
     });
 
-    // 9. Etkinlik Dinleyicileri (Filtreleme)
-    document.getElementById('periodSelect').addEventListener('change', renderMarkers);
-    document.getElementById('typeSelect').addEventListener('change', renderMarkers);
+    // Filtreleme Olay Dinleyicileri
+    document.getElementById('viewModeSelect').addEventListener('change', renderMarkers);
+    document.getElementById('symbolSelect').addEventListener('change', renderMarkers);
 
-    // Başlangıçta verileri yükle
+    // Uygulamayı Başlat
     fetchGoogleSheetsData();
   </script>
 </body>
