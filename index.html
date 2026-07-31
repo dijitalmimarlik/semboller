@@ -415,7 +415,6 @@
 </head>
 <body>
 
-  <!-- Üst Başlık Çubuğu -->
   <header class="top-navbar">
     <div class="navbar-brand">
       <span></span> İMÜ İslam Tarihi ve Sanatları
@@ -426,25 +425,18 @@
     </ul>
   </header>
 
-  <!-- Sol Taraf Yüzen Alan -->
   <div class="sidebar-container">
-    
-    <!-- Bilgi Kutusu -->
     <div class="info-card">
       <div class="univ-title">İstanbul Medeniyet Üniversitesi</div>
       <div class="dept-title">İslam Tarihi ve Sanatları ABD</div>
       <div class="map-title">Kültür Envanteri Haritası</div>
     </div>
 
-    <!-- Filtreleme Paneli -->
     <div class="filter-panel">
       <h2>🏛️ Envanter Filtrele</h2>
-      
       <div id="statusIndicator" class="status-badge">
         ⏳ Veriler yükleniyor...
       </div>
-
-      <!-- Görünüm Modu Seçimi -->
       <div class="filter-group">
         <label for="viewModeSelect">Görünüm Modu</label>
         <select id="viewModeSelect" class="filter-select">
@@ -452,8 +444,6 @@
           <option value="heatmap">🔥 Isı Haritası</option>
         </select>
       </div>
-
-      <!-- Sembol Tipi Seçimi (Seçenekler Kod Tarafından Otomatik Doldurulacak) -->
       <div class="filter-group">
         <label for="symbolSelect">Sembollere Göre Filtrele</label>
         <select id="symbolSelect" class="filter-select">
@@ -462,17 +452,12 @@
       </div>
     </div>
 
-    <!-- Yapı Listesi Paneli -->
     <div class="list-panel">
       <h2 id="listHeading">📍 Görüntülenen Yapılar: 0 Adet</h2>
-      <ul id="buildingList" class="building-list">
-        <!-- JS ile dinamik olarak doldurulacak -->
-      </ul>
+      <ul id="buildingList" class="building-list"></ul>
     </div>
-
   </div>
 
-  <!-- Sağ Üst Ekran Görüntüsü Butonu -->
   <button id="downloadMapBtn" class="download-btn" title="Görünen haritayı yüksek çözünürlüklü indir">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -481,7 +466,6 @@
     Haritayı Kaydet
   </button>
 
-  <!-- Harita Konteyneri -->
   <div id="map"></div>
 
   <!-- Kütüphaneler -->
@@ -491,10 +475,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
-    // GOOGLE SHEETS CSV URL
     const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6uCTIbY3aTzOrHKmM-37qT3DZYhEw4tWJaxYcvqtw-w1WpZgIHxwhi1A9Ff0s6Ihbh1A4HHVwWpbt/pub?output=csv';
 
-    // HARİTA OLUŞTURMA (attributionControl ve zoom ayarı ile logolar gizlendi)
     const map = L.map('map', { 
       zoomControl: false, 
       attributionControl: false 
@@ -506,35 +488,53 @@
       subdomains: 'abcd'
     }).addTo(map);
 
-    // Kategori ve Sembol Ayarları
     const categoryConfig = {
       kandil: {
         color: '#f59e0b',
-        label: 'Kandil',
         svg: `<svg viewBox="0 0 24 24"><path d="M12 2L10 5H14L12 2ZM8 6H16L17.5 14H6.5L8 6ZM11 15H13V20H11V15Z"/></svg>`
       },
       kus: {
         color: '#0ea5e9',
-        label: 'Kuş',
         svg: `<svg viewBox="0 0 24 24"><path d="M21 11.5C21 11.5 19.5 9 16.5 9C14.7 9 13.1 9.9 12 11.3C10.9 9.9 9.3 9 7.5 9C4.5 9 3 11.5 3 11.5C3 11.5 5 14.5 8 14.5C9.3 14.5 10.5 13.9 11.3 13L12 12.1L12.7 13C13.5 13.9 14.7 14.5 16 14.5C19 14.5 21 11.5 21 11.5Z"/></svg>`
       },
       meyve: {
         color: '#10b981',
-        label: 'Meyve',
         svg: `<svg viewBox="0 0 24 24"><path d="M15.5 3C15.5 3 14 3 12 5C10 3 8.5 3 8.5 3C6 3 4 5 4 8C4 13 12 21 12 21C12 21 20 13 20 8C20 5 18 3 15.5 3Z"/></svg>`
       },
-      // Çoklu sembollü yapılar için
       karma: {
-        color: '#8b5cf6', // Mor renk
-        label: 'Çoklu Sembol',
+        color: '#8b5cf6', 
+        label: 'Çoklu Sembol', 
         svg: `<svg viewBox="0 0 24 24"><path d="M12 2L2 7L12 12L22 7L12 2ZM2 17L12 22L22 17L22 12L12 17L2 12L2 17Z"/></svg>`
       }
     };
 
-    // Dinamik yapılandırma okuyucu (Bilinmeyen/Yeni sembol gelirse varsayılan ikon ve renk atar)
+    let buildingsData = [];
+    let typeDisplayNames = {}; // YENİ: Ekranda görünecek orijinal isimleri tutar (Örn: { kus: 'Kuş' })
+    let markerGroup = L.layerGroup().addTo(map);
+    let markersMap = {}; 
+    let heatLayer; 
+
+    // Orijinal Türkçe etiketi veya ilk harfi büyük halini döndürür
+    function getDisplayLabel(typeKey) {
+      if (categoryConfig[typeKey] && categoryConfig[typeKey].label) {
+        return categoryConfig[typeKey].label;
+      }
+      if (typeDisplayNames[typeKey]) {
+        return typeDisplayNames[typeKey];
+      }
+      return typeKey.charAt(0).toUpperCase() + typeKey.slice(1);
+    }
+
+    // Dinamik yapılandırma okuyucu
     function getCategoryConfig(typeKey) {
-      if (categoryConfig[typeKey]) {
-        return categoryConfig[typeKey];
+      const label = getDisplayLabel(typeKey);
+
+      if (categoryConfig[typeKey] && categoryConfig[typeKey].color) {
+        return {
+          color: categoryConfig[typeKey].color,
+          label: label,
+          svg: categoryConfig[typeKey].svg
+        };
       }
       
       const fallbackColors = ['#64748b', '#ef4444', '#14b8a6', '#ec4899']; 
@@ -543,51 +543,11 @@
 
       return {
         color: autoColor,
-        label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
+        label: label,
         svg: `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`
       };
     }
 
-    // Örnek Veri Seti (İnternet/Tablo bağlanamazsa devreye girer)
-    const fallbackBuildings = [
-      {
-        id: 1,
-        name: "Ayasofya-i Kebir Cami-i Şerifi",
-        type: ["kandil", "kus"], 
-        coords: [41.0086, 28.9802],
-        year: "İnşa: M.S. 537",
-        desc: "İçerisinde tarihi kandil motifleri ve dış mimarisinde kuş evleri bulunduran anıtsal yapı.",
-        image: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=400&q=80",
-        url: "#"
-      },
-      {
-        id: 2,
-        name: "Galata Kulesi",
-        type: ["kus"],
-        coords: [41.0256, 28.9744],
-        year: "İnşa: M.S. 1348",
-        desc: "Kuş bakışı İstanbul manzarasına sahip tarihi gözetleme kulesi.",
-        image: "https://images.unsplash.com/photo-1527838832700-54595d2f408e?auto=format&fit=crop&w=400&q=80",
-        url: "#"
-      },
-      {
-        id: 3,
-        name: "Topkapı Sarayı Yemiş Odası",
-        type: ["meyve"],
-        coords: [41.0115, 28.9833],
-        year: "İnşa: 1705",
-        desc: "Duvarlarında çeşitli meyve freskleri bulunan özel tasarımlı oda.",
-        image: "https://images.unsplash.com/photo-1582879304171-82fd426fb63e?auto=format&fit=crop&w=400&q=80",
-        url: "#"
-      }
-    ];
-
-    let buildingsData = [];
-    let markerGroup = L.layerGroup().addTo(map);
-    let markersMap = {}; 
-    let heatLayer; 
-
-    // Özel İkon Üretici
     function createCustomIcon(typeKey) {
       const config = getCategoryConfig(typeKey);
       return L.divIcon({
@@ -603,7 +563,6 @@
       });
     }
 
-    // Verideki benzersiz tipleri bulup HTML select menüsünü otomatik doldurur
     function buildDynamicFilters() {
       const selectEl = document.getElementById('symbolSelect');
       const uniqueTypes = new Set();
@@ -617,12 +576,12 @@
       Array.from(uniqueTypes).sort().forEach(type => {
         const option = document.createElement('option');
         option.value = type;
-        option.text = type.charAt(0).toUpperCase() + type.slice(1);
+        // Görünen isme Türkçe karakterli orijinal halini bas
+        option.text = getDisplayLabel(type);
         selectEl.appendChild(option);
       });
     }
 
-    // Haritayı Çizdirme (Marker veya Heatmap)
     function renderMarkers() {
       markerGroup.clearLayers();
       if (heatLayer) {
@@ -639,14 +598,11 @@
 
       filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-      // 📍 MARKER MODU
       if (viewMode === 'marker') {
         filtered.forEach(building => {
-          
           const isMulti = building.type.length > 1;
           const mainIconType = isMulti ? 'karma' : building.type[0];
           
-          // Dinamik Rozet (Badge) Üretimi
           const badgesHTML = building.type.map(t => {
             const cfg = getCategoryConfig(t);
             return `<span class="badge" style="background: #f1f5f9; color: ${cfg.color}; border: 1px solid ${cfg.color};">${cfg.label}</span>`;
@@ -681,7 +637,6 @@
         });
 
       } 
-      // 🔥 ISI HARİTASI MODU
       else if (viewMode === 'heatmap') {
         const heatPoints = [];
         filtered.forEach(building => {
@@ -700,7 +655,6 @@
       updateBuildingList(filtered, viewMode);
     }
 
-    // Sol Listeyi Güncelleme
     function updateBuildingList(buildings, viewMode) {
       const listContainer = document.getElementById('buildingList');
       const listHeading = document.getElementById('listHeading');
@@ -736,17 +690,8 @@
       });
     }
 
-    // Excel (CSV) Verisi Çekme Fonksiyonu
     function fetchGoogleSheetsData() {
       const statusEl = document.getElementById('statusIndicator');
-
-      if (!GOOGLE_SHEETS_CSV_URL) {
-        statusEl.innerHTML = "💡 Örnek Modu";
-        buildingsData = fallbackBuildings;
-        buildDynamicFilters();
-        renderMarkers();
-        return;
-      }
 
       Papa.parse(GOOGLE_SHEETS_CSV_URL, {
         download: true,
@@ -756,17 +701,26 @@
           if (results.data && results.data.length > 0) {
             buildingsData = results.data.map((row, index) => {
               
-              // Veriyi Türkçe karakterlerden arındırıp diziye çevirir (Örn: "Kuş, Kandil" -> ["kus", "kandil"])
-              const typesArray = row.type ? row.type
-                .toLowerCase()
-                .replace(/ş/g, 's')
-                .replace(/ı/g, 'i')
-                .replace(/ğ/g, 'g')
-                .replace(/ü/g, 'u')
-                .replace(/ö/g, 'o')
-                .replace(/ç/g, 'c')
-                .split(',')
-                .map(s => s.trim()) : ['kandil'];
+              // Veriyi parçala
+              const rawTypes = row.type ? row.type.split(',').map(s => s.trim()) : ['Kandil'];
+              
+              const typesArray = rawTypes.map(originalStr => {
+                // Arka plan için güvenli anahtar oluştur (örn: "Kuş" -> "kus")
+                const safeKey = originalStr.toLowerCase()
+                  .replace(/ş/g, 's')
+                  .replace(/ı/g, 'i')
+                  .replace(/ğ/g, 'g')
+                  .replace(/ü/g, 'u')
+                  .replace(/ö/g, 'o')
+                  .replace(/ç/g, 'c');
+                
+                // Orijinal görünümü sözlüğe kaydet (İlk harfi büyük tutarak)
+                if (!typeDisplayNames[safeKey]) {
+                  typeDisplayNames[safeKey] = originalStr.charAt(0).toUpperCase() + originalStr.slice(1);
+                }
+                
+                return safeKey;
+              });
 
               return {
                 id: index + 1, 
@@ -781,28 +735,13 @@
             }).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
 
             statusEl.style.display = 'none';
-            buildDynamicFilters(); // Otomatik filtreleri oluştur
-            renderMarkers(); // Haritayı çiz
-          } else {
-            statusEl.style.display = 'flex';
-            statusEl.innerHTML = "⚠️ Tablo Boş";
-            buildingsData = fallbackBuildings;
-            buildDynamicFilters();
-            renderMarkers();
+            buildDynamicFilters(); 
+            renderMarkers(); 
           }
-        },
-        error: function(err) {
-          console.error("Hata:", err);
-          statusEl.style.display = 'flex';
-          statusEl.innerHTML = "❌ Canlı Veri Hatası";
-          buildingsData = fallbackBuildings;
-          buildDynamicFilters();
-          renderMarkers();
         }
       });
     }
 
-    // Harita İndirme İşlevi
     document.getElementById('downloadMapBtn').addEventListener('click', function() {
       const btn = this;
       const originalHTML = btn.innerHTML;
@@ -821,19 +760,12 @@
         
         btn.innerHTML = originalHTML;
         btn.style.pointerEvents = 'auto';
-      }).catch(err => {
-        console.error('Hata:', err);
-        alert('Kaydedilirken hata oluştu.');
-        btn.innerHTML = originalHTML;
-        btn.style.pointerEvents = 'auto';
       });
     });
 
-    // Filtreleme Olay Dinleyicileri
     document.getElementById('viewModeSelect').addEventListener('change', renderMarkers);
     document.getElementById('symbolSelect').addEventListener('change', renderMarkers);
 
-    // Uygulamayı Başlat
     fetchGoogleSheetsData();
   </script>
 </body>
