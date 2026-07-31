@@ -600,8 +600,16 @@
 
       if (viewMode === 'marker') {
         filtered.forEach(building => {
+          let mainIconType;
+        
+        // Eğer belirli bir sembol filtrelenmişse, ikonu direkt filtrelenen sembol yap
+        if (selectedSymbol !== 'all') {
+          mainIconType = selectedSymbol;
+        } else {
+          // Filtreleme yoksa (Tüm Semboller seçiliyse) eski mantığı koru
           const isMulti = building.type.length > 1;
-          const mainIconType = isMulti ? 'karma' : building.type[0];
+          mainIconType = isMulti ? 'karma' : building.type[0];
+        }
           
           const badgesHTML = building.type.map(t => {
             const cfg = getCategoryConfig(t);
