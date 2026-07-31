@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İMÜ İslam Tarihi ve Sanatları - Kültür Envanteri Haritası</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100vw;
+      height: 100vh;
+      background-color: #f8fafc;
+      z-index: 1;
+    }
+
+    /* 📌 1. Üst Başlık Çubuğu (Navbar) */
+    .top-navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      z-index: 1100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .navbar-brand span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background-color: #2563eb;
+      border-radius: 50%;
+    }
+
+    .navbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+    }
+
+    .navbar-nav a {
+      text-decoration: none;
+      color: #475569;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .navbar-nav a:hover {
+      color: #2563eb;
+    }
+
+    /* 🎛️ Sol Taraf Yüzen Panel Kapsayıcısı */
+    .sidebar-container {
+      position: absolute;
+      top: 80px;
+      left: 20px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 300px;
+    }
+
+    /* 📌 2. Bilgi Kutusu */
+    .info-card {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      padding: 18px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .info-card .univ-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #2563eb;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .info-card .dept-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .info-card .map-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    /* Filtre Paneli */
+    .filter-panel {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      padding: 18px 20px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .filter-panel h2 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .filter-group label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: #ffffff;
+      color: #1e293b;
+      font-size: 0.85rem;
+      font-weight: 500;
+      outline: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .status-badge {
+      font-size: 0.72rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-badge.live {
+      background: #f0fdf4;
+      color: #15803d;
+    }
+
+    /* 📍 Özel SVG İkon Stilleri */
+    .custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border: 2px solid var(--marker-color);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .custom-marker:hover {
+      transform: scale(1.18);
+    }
+
+    .custom-marker svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--marker-color);
+    }
+
+    /* 🎨 Popup Tasarımı */
+    .leaflet-popup-content-wrapper {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 6px;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    }
+
+    .leaflet-popup-tip {
+      background: #ffffff;
+    }
+
+    .building-card {
+      max-width: 260px;
+      padding: 6px;
+    }
+
+    .building-card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .badge-container {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    .badge-dini { background: #fef3c7; color: #92400e; }
+    .badge-askeri { background: #fee2e2; color: #991b1b; }
+    .badge-sivil { background: #e0f2fe; color: #075985; }
+
+    .building-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .building-card .year {
+      font-size: 0.78rem;
+      color: #64748b;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .building-card p {
+      font-size: 0.82rem;
+      color: #475569;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+
+    .building-card a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 9px;
+      background: #0f172a;
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .building-card a:hover {
+      background: #2563eb;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. Üst Başlık Çubuğu (Navbar) -->
+  <header class="top-navbar">
+    <div class="navbar-brand">
+      <span></span> İMÜ İslam Tarihi ve Sanatları
+    </div>
+    <ul class="navbar-nav">
+      <li><a href="#">Ana Sayfa</a></li>
+      <li><a href="#">İletişim</a></li>
+    </ul>
+  </header>
+
+  <!-- Sol Taraf Yüzen Alan (Bilgi Kutusu + Filtreler) -->
+  <div class="sidebar-container">
+    
+    <!-- 2. Bilgi Kutusu -->
+    <div class="info-card">
+      <div class="univ-title">İstanbul Medeniyet Üniversitesi</div>
+      <div class="dept-title">İslam Tarihi ve Sanatları ABD</div>
+      <div class="map-title">Kültür Envanteri Haritası</div>
+    </div>
+
+    <!-- Filtreleme Paneli -->
+    <div class="filter-panel">
+      <h2>🏛️ Envanter Filtrele</h2>
+      
+      <div id="statusIndicator" class="status-badge">
+        ⏳ Veriler yükleniyor...
+      </div>
+
+      <div class="filter-group">
+        <label for="periodSelect">Tarih / Dönem</label>
+        <select id="periodSelect" class="filter-select">
+          <option value="all">Tüm Dönemler</option>
+          <option value="bizans">Bizans Dönemi</option>
+          <option value="osmanli">Osmanlı Dönemi</option>
+          <option value="ceneviz">Ceneviz Dönemi</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="typeSelect">Yapı Türü</label>
+        <select id="typeSelect" class="filter-select">
+          <option value="all">Tüm Yapı Türleri</option>
+          <option value="dini">Dini Yapılar (Cami / Kilise)</option>
+          <option value="askeri">Askeri / Gözetleme</option>
+          <option value="sivil">Sivil / Kamu / Anıt</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Harita Konteyneri -->
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- PapaParse CSV Parser JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <script>
+    // 🔗 GOOGLE SHEETS YAYINLANMIŞ CSV BAĞLANTISI
+    // Buraya kendi Google Sheet CSV linkinizi yapıştırın
+    const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv';
+
+    // 1. Haritayı Başlat
+    const map = L.map('map', { zoomControl: false }).setView([41.015, 28.975], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // 2. Aydınlık ve Sade Altlık (CartoDB Positron)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    // 3. SVG İkon Kütüphanesi
+    const categoryConfig = {
+      dini: {
+        color: '#d97706',
+        label: 'Dini Yapı',
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 2L10 5H14L12 2ZM12 6C7 6 4 10 4 15V21H20V15C20 10 17 6 12 6ZM12 18C10.9 18 10 17.1 10 16C10 14.9 10.9 14 12 14C13.1 14 14 14.9 14 16C14 17.1 13.1 18 12 18Z"/></svg>`
+      },
+      askeri: {
+        color: '#dc2626',
+        label: 'Askeri Yapı',
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 1L3 5V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V5L12 1Z"/></svg>`
+      },
+      sivil: {
+        color: '#0284c7',
+        label: 'Sivil Mimari',
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 3L2 12H5V20H19V12H22L12 3ZM12 8.75C13.24 8.75 14.25 9.76 14.25 11C14.25 12.24 13.24 13.25 12 13.25C10.76 13.25 9.75 12.24 9.75 11C9.75 9.76 10.76 8.75 12 8.75Z"/></svg>`
+      }
+    };
+
+    // Yedek / Örnek Veri Seti (Google Sheet bağlı değilken veya URL boşken çalışan örnek veriler)
+    const fallbackBuildings = [
+      {
+        id: 1,
+        name: "Ayasofya-i Kebir Cami-i Şerifi",
+        period: "bizans",
+        type: "dini",
+        coords: [41.0086, 28.9802],
+        year: "İnşa: M.S. 537",
+        desc: "Bizans İmparatoru I. Justinianus tarafından yaptırılan, mimarlık tarihinin başyapıtlarından biri.",
+        image: "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=400&q=80",
+        url: "https://tr.wikipedia.org/wiki/Ayasofya"
+      },
+      {
+        id: 2,
+        name: "Galata Kulesi",
+        period: "ceneviz",
+        type: "askeri",
+        coords: [41.0256, 28.9744],
+        year: "İnşa: M.S. 1348",
+        desc: "Cenevizliler tarafından Galata surlarının bir parçası ve gözetleme kulesi olarak inşa edilmiştir.",
+        image: "https://images.unsplash.com/photo-1527838832700-54595d2f408e?auto=format&fit=crop&w=400&q=80",
+        url: "https://tr.wikipedia.org/wiki/Galata_Kulesi"
+      },
+      {
+        id: 3,
+        name: "Süleymaniye Camii",
+        period: "osmanli",
+        type: "dini",
+        coords: [41.0161, 28.9639],
+        year: "İnşa: M.S. 1557",
+        desc: "Mimar Sinan'ın kalfalık eseri olarak nitelendirdiği, Kanuni Sultan Süleyman adına yapılan külliye.",
+        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80",
+        url: "https://tr.wikipedia.org/wiki/S%C3%BCleymaniye_Camii"
+      },
+      {
+        id: 4,
+        name: "Alman Çeşmesi",
+        period: "osmanli",
+        type: "sivil",
+        coords: [41.0071, 28.9767],
+        year: "İnşa: M.S. 1901",
+        desc: "Alman İmparatoru II. Wilhelm'in Sultan II. Abdülhamid'e hediyesi olan Neo-Bizans stilindeki çeşme.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Alman_%C3%87e%C5%9Fmesi_2011.jpg/400px-Alman_%C3%87e%C5%9Fmesi_2011.jpg",
+        url: "https://tr.wikipedia.org/wiki/Alman_%C3%87e%C5%9Fmesi"
+      }
+    ];
+
+    let buildingsData = [];
+    const markerGroup = L.layerGroup().addTo(map);
+
+    // 4. Özel İkon Fonksiyonu
+    function createCustomIcon(type) {
+      const config = categoryConfig[type] || categoryConfig.sivil;
+      return L.divIcon({
+        className: 'custom-icon-wrapper',
+        html: `
+          <div class="custom-marker" style="--marker-color: ${config.color}">
+            ${config.svg}
+          </div>
+        `,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+        popupAnchor: [0, -18]
+      });
+    }
+
+    // 5. Marker Çizme & Filtreleme
+    function renderMarkers() {
+      markerGroup.clearLayers();
+
+      const selectedPeriod = document.getElementById('periodSelect').value;
+      const selectedType = document.getElementById('typeSelect').value;
+
+      const filtered = buildingsData.filter(b => {
+        const periodMatch = (selectedPeriod === 'all') || (b.period === selectedPeriod);
+        const typeMatch = (selectedType === 'all') || (b.type === selectedType);
+        return periodMatch && typeMatch;
+      });
+
+      filtered.forEach(building => {
+        const config = categoryConfig[building.type] || categoryConfig.sivil;
+        
+        const popupContent = `
+          <div class="building-card">
+            ${building.image ? `<img src="${building.image}" alt="${building.name}">` : ''}
+            <div class="badge-container">
+              <span class="badge badge-${building.type}">${config.label}</span>
+            </div>
+            <h3>${building.name}</h3>
+            <div class="year">${building.year}</div>
+            <p>${building.desc}</p>
+            <a href="${building.url}" target="_blank" rel="noopener noreferrer">
+              Devamını Oku &rarr;
+            </a>
+          </div>
+        `;
+
+        const marker = L.marker(building.coords, {
+          icon: createCustomIcon(building.type)
+        }).bindPopup(popupContent);
+
+        markerGroup.addLayer(marker);
+      });
+    }
+
+    // 6. Google Sheets Verisini Çekme (PapaParse)
+    function fetchGoogleSheetsData() {
+      const statusEl = document.getElementById('statusIndicator');
+
+      // Eğer URL tanımlanmamışsa yedek örnek verileri gösterir
+      if (!GOOGLE_SHEETS_CSV_URL || GOOGLE_SHEETS_CSV_URL.includes('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv')) {
+        console.warn("Google Sheets CSV URL'si henüz tanımlanmadı. Örnek veriler gösteriliyor.");
+        statusEl.innerHTML = "💡 Örnek Modu (Sheet Bağlanmadı)";
+        buildingsData = fallbackBuildings;
+        renderMarkers();
+        return;
+      }
+
+      Papa.parse(GOOGLE_SHEETS_CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          if (results.data && results.data.length > 0) {
+            buildingsData = results.data.map((row, index) => ({
+              id: index + 1,
+              name: row.name ? row.name.trim() : 'İsimsiz Yapı',
+              period: row.period ? row.period.trim().toLowerCase() : 'diğer',
+              type: row.type ? row.type.trim().toLowerCase() : 'sivil',
+              coords: [parseFloat(row.lat), parseFloat(row.lng)],
+              year: row.year ? row.year.trim() : '',
+              desc: row.desc ? row.desc.trim() : '',
+              image: row.image ? row.image.trim() : '',
+              url: row.url ? row.url.trim() : '#'
+            })).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
+
+            statusEl.className = "status-badge live";
+            statusEl.innerHTML = `🟢 Canlı Veri (${buildingsData.length} Yapı Yüklendi)`;
+            renderMarkers();
+          } else {
+            statusEl.innerHTML = "⚠️ Tablo Boş veya Okunamadı";
+            buildingsData = fallbackBuildings;
+            renderMarkers();
+          }
+        },
+        error: function(err) {
+          console.error("Google Sheets Okuma Hatası:", err);
+          statusEl.innerHTML = "❌ Canlı Veri Bağlantı Hatası";
+          buildingsData = fallbackBuildings;
+          renderMarkers();
+        }
+      });
+    }
+
+    // 7. Etkinlik Dinleyicileri (Filtreleme)
+    document.getElementById('periodSelect').addEventListener('change', renderMarkers);
+    document.getElementById('typeSelect').addEventListener('change', renderMarkers);
+
+    // Başlangıçta verileri yükle
+    fetchGoogleSheetsData();
+  </script>
+</body>
+</html>
