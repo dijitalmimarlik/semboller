@@ -29,7 +29,7 @@
       z-index: 1;
     }
 
-    /* 📌 1. Üst Başlık Çubuğu (Navbar) */
+    /* 📌 Üst Başlık Çubuğu (Navbar) */
     .top-navbar {
       position: fixed;
       top: 0;
@@ -97,7 +97,7 @@
       width: 300px;
     }
 
-    /* 📌 2. Bilgi Kutusu */
+    /* 📌 Bilgi Kutusu */
     .info-card {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(16px);
@@ -201,7 +201,7 @@
       gap: 6px;
     }
 
-    /* 📌 3. Yapı Listesi Paneli */
+    /* 📌 Yapı Listesi Paneli */
     .list-panel {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(16px);
@@ -262,7 +262,7 @@
       border-bottom: none;
     }
 
-    /* 📌 4. Ekran Görüntüsü İndirme Butonu */
+    /* 📌 Ekran Görüntüsü İndirme Butonu */
     .download-btn {
       position: absolute;
       top: 80px;
@@ -362,6 +362,7 @@
       margin-bottom: 8px;
     }
 
+    /* Dinamik Rozet Stili */
     .badge {
       font-size: 0.68rem;
       font-weight: 600;
@@ -369,11 +370,6 @@
       border-radius: 6px;
       text-transform: uppercase;
     }
-
-    /* Kategori Renkleri */
-    .badge-kandil { background: #fef3c7; color: #b45309; }
-    .badge-kus { background: #e0f2fe; color: #0369a1; }
-    .badge-meyve { background: #dcfce7; color: #15803d; }
 
     .building-card h3 {
       font-size: 1rem;
@@ -419,7 +415,7 @@
 </head>
 <body>
 
-  <!-- 1. Üst Başlık Çubuğu -->
+  <!-- Üst Başlık Çubuğu -->
   <header class="top-navbar">
     <div class="navbar-brand">
       <span></span> İMÜ İslam Tarihi ve Sanatları
@@ -433,7 +429,7 @@
   <!-- Sol Taraf Yüzen Alan -->
   <div class="sidebar-container">
     
-    <!-- 2. Bilgi Kutusu -->
+    <!-- Bilgi Kutusu -->
     <div class="info-card">
       <div class="univ-title">İstanbul Medeniyet Üniversitesi</div>
       <div class="dept-title">İslam Tarihi ve Sanatları ABD</div>
@@ -457,19 +453,16 @@
         </select>
       </div>
 
-      <!-- Sembol Tipi Seçimi (TEK FİLTRE) -->
+      <!-- Sembol Tipi Seçimi (Seçenekler Kod Tarafından Otomatik Doldurulacak) -->
       <div class="filter-group">
         <label for="symbolSelect">Sembollere Göre Filtrele</label>
         <select id="symbolSelect" class="filter-select">
           <option value="all">Tüm Semboller</option>
-          <option value="kandil">Kandil</option>
-          <option value="kus">Kuş</option>
-          <option value="meyve">Meyve</option>
         </select>
       </div>
     </div>
 
-    <!-- 3. Yapı Listesi Paneli -->
+    <!-- Yapı Listesi Paneli -->
     <div class="list-panel">
       <h2 id="listHeading">📍 Görüntülenen Yapılar: 0 Adet</h2>
       <ul id="buildingList" class="building-list">
@@ -479,7 +472,7 @@
 
   </div>
 
-  <!-- 4. Sağ Üst Ekran Görüntüsü Butonu -->
+  <!-- Sağ Üst Ekran Görüntüsü Butonu -->
   <button id="downloadMapBtn" class="download-btn" title="Görünen haritayı yüksek çözünürlüklü indir">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -498,19 +491,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
-    // GOOGLE SHEETS CSV URL (Kendi linkinizle değiştirebilirsiniz)
+    // GOOGLE SHEETS CSV URL
     const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR6uCTIbY3aTzOrHKmM-37qT3DZYhEw4tWJaxYcvqtw-w1WpZgIHxwhi1A9Ff0s6Ihbh1A4HHVwWpbt/pub?output=csv';
 
+    // HARİTA OLUŞTURMA (attributionControl ve zoom ayarı ile logolar gizlendi)
     const map = L.map('map', { 
-  zoomControl: false, 
-  attributionControl: false // Sağ alttaki yazıları ve linkleri tamamen kapatır
-}).setView([39.0, 35.2], 6);
+      zoomControl: false, 
+      attributionControl: false 
+    }).setView([39.0, 35.2], 6);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  maxZoom: 19,
-  subdomains: 'abcd'
-}).addTo(map);
+      maxZoom: 19,
+      subdomains: 'abcd'
+    }).addTo(map);
 
     // Kategori ve Sembol Ayarları
     const categoryConfig = {
@@ -529,7 +523,7 @@
         label: 'Meyve',
         svg: `<svg viewBox="0 0 24 24"><path d="M15.5 3C15.5 3 14 3 12 5C10 3 8.5 3 8.5 3C6 3 4 5 4 8C4 13 12 21 12 21C12 21 20 13 20 8C20 5 18 3 15.5 3Z"/></svg>`
       },
-      // Birden fazla sembolü olan yapılar için "Katmanlar" ikonu
+      // Çoklu sembollü yapılar için
       karma: {
         color: '#8b5cf6', // Mor renk
         label: 'Çoklu Sembol',
@@ -537,12 +531,29 @@
       }
     };
 
-    // Örnek Veri Seti (Ayasofya örneği Çoklu Sembol yapıldı)
+    // Dinamik yapılandırma okuyucu (Bilinmeyen/Yeni sembol gelirse varsayılan ikon ve renk atar)
+    function getCategoryConfig(typeKey) {
+      if (categoryConfig[typeKey]) {
+        return categoryConfig[typeKey];
+      }
+      
+      const fallbackColors = ['#64748b', '#ef4444', '#14b8a6', '#ec4899']; 
+      const charCodeSum = typeKey.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+      const autoColor = fallbackColors[charCodeSum % fallbackColors.length];
+
+      return {
+        color: autoColor,
+        label: typeKey.charAt(0).toUpperCase() + typeKey.slice(1),
+        svg: `<svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`
+      };
+    }
+
+    // Örnek Veri Seti (İnternet/Tablo bağlanamazsa devreye girer)
     const fallbackBuildings = [
       {
         id: 1,
         name: "Ayasofya-i Kebir Cami-i Şerifi",
-        type: ["kandil", "kus"], // ÇOKLU SEMBOL ÖRNEĞİ
+        type: ["kandil", "kus"], 
         coords: [41.0086, 28.9802],
         year: "İnşa: M.S. 537",
         desc: "İçerisinde tarihi kandil motifleri ve dış mimarisinde kuş evleri bulunduran anıtsal yapı.",
@@ -578,7 +589,7 @@
 
     // Özel İkon Üretici
     function createCustomIcon(typeKey) {
-      const config = categoryConfig[typeKey] || categoryConfig.kandil;
+      const config = getCategoryConfig(typeKey);
       return L.divIcon({
         className: 'custom-icon-wrapper',
         html: `
@@ -592,9 +603,27 @@
       });
     }
 
+    // Verideki benzersiz tipleri bulup HTML select menüsünü otomatik doldurur
+    function buildDynamicFilters() {
+      const selectEl = document.getElementById('symbolSelect');
+      const uniqueTypes = new Set();
+
+      buildingsData.forEach(b => {
+        b.type.forEach(t => uniqueTypes.add(t));
+      });
+
+      selectEl.innerHTML = '<option value="all">Tüm Semboller</option>';
+
+      Array.from(uniqueTypes).sort().forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.text = type.charAt(0).toUpperCase() + type.slice(1);
+        selectEl.appendChild(option);
+      });
+    }
+
     // Haritayı Çizdirme (Marker veya Heatmap)
     function renderMarkers() {
-      // Temizlik İşlemleri
       markerGroup.clearLayers();
       if (heatLayer) {
         map.removeLayer(heatLayer);
@@ -604,7 +633,6 @@
       const viewMode = document.getElementById('viewModeSelect').value;
       const selectedSymbol = document.getElementById('symbolSelect').value;
 
-      // Filtreleme (Çoklu sembol array mantığına göre)
       let filtered = buildingsData.filter(b => {
         return (selectedSymbol === 'all') || b.type.includes(selectedSymbol);
       });
@@ -615,14 +643,13 @@
       if (viewMode === 'marker') {
         filtered.forEach(building => {
           
-          // Yapıda birden fazla sembol varsa "karma" ikonunu kullan
           const isMulti = building.type.length > 1;
           const mainIconType = isMulti ? 'karma' : building.type[0];
           
-          // Pop-up için yapının tüm sembollerine ait rozetleri (badge) oluştur
+          // Dinamik Rozet (Badge) Üretimi
           const badgesHTML = building.type.map(t => {
-            const cfg = categoryConfig[t];
-            return cfg ? `<span class="badge badge-${t}">${cfg.label}</span>` : '';
+            const cfg = getCategoryConfig(t);
+            return `<span class="badge" style="background: #f1f5f9; color: ${cfg.color}; border: 1px solid ${cfg.color};">${cfg.label}</span>`;
           }).join('');
           
           const popupContent = `
@@ -716,6 +743,7 @@
       if (!GOOGLE_SHEETS_CSV_URL) {
         statusEl.innerHTML = "💡 Örnek Modu";
         buildingsData = fallbackBuildings;
+        buildDynamicFilters();
         renderMarkers();
         return;
       }
@@ -728,13 +756,22 @@
           if (results.data && results.data.length > 0) {
             buildingsData = results.data.map((row, index) => {
               
-              // Veriyi virgüllerden ayırıp diziye (array) çevirir (Örn: "kandil, kus")
-              const typesArray = row.type ? row.type.toLowerCase().split(',').map(s => s.trim()) : ['kandil'];
+              // Veriyi Türkçe karakterlerden arındırıp diziye çevirir (Örn: "Kuş, Kandil" -> ["kus", "kandil"])
+              const typesArray = row.type ? row.type
+                .toLowerCase()
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .split(',')
+                .map(s => s.trim()) : ['kandil'];
 
               return {
                 id: index + 1, 
                 name: row.name ? row.name.trim() : 'İsimsiz Yapı',
-                type: typesArray, // Artık bir dizi olarak saklanıyor
+                type: typesArray, 
                 coords: [parseFloat(row.lat), parseFloat(row.lng)],
                 year: row.year ? row.year.trim() : '',
                 desc: row.desc ? row.desc.trim() : '',
@@ -744,11 +781,13 @@
             }).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
 
             statusEl.style.display = 'none';
-            renderMarkers();
+            buildDynamicFilters(); // Otomatik filtreleri oluştur
+            renderMarkers(); // Haritayı çiz
           } else {
             statusEl.style.display = 'flex';
             statusEl.innerHTML = "⚠️ Tablo Boş";
             buildingsData = fallbackBuildings;
+            buildDynamicFilters();
             renderMarkers();
           }
         },
@@ -757,6 +796,7 @@
           statusEl.style.display = 'flex';
           statusEl.innerHTML = "❌ Canlı Veri Hatası";
           buildingsData = fallbackBuildings;
+          buildDynamicFilters();
           renderMarkers();
         }
       });
