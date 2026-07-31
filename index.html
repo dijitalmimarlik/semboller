@@ -380,7 +380,6 @@
 
   <script>
     // 🔗 GOOGLE SHEETS YAYINLANMIŞ CSV BAĞLANTISI
-    // Buraya kendi Google Sheet CSV linkinizi yapıştırın
     const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv';
 
     // 1. Haritayı Başlat
@@ -413,7 +412,7 @@
       }
     };
 
-    // Yedek / Örnek Veri Seti (Google Sheet bağlı değilken veya URL boşken çalışan örnek veriler)
+    // Yedek / Örnek Veri Seti
     const fallbackBuildings = [
       {
         id: 1,
@@ -436,28 +435,6 @@
         desc: "Cenevizliler tarafından Galata surlarının bir parçası ve gözetleme kulesi olarak inşa edilmiştir.",
         image: "https://images.unsplash.com/photo-1527838832700-54595d2f408e?auto=format&fit=crop&w=400&q=80",
         url: "https://tr.wikipedia.org/wiki/Galata_Kulesi"
-      },
-      {
-        id: 3,
-        name: "Süleymaniye Camii",
-        period: "osmanli",
-        type: "dini",
-        coords: [41.0161, 28.9639],
-        year: "İnşa: M.S. 1557",
-        desc: "Mimar Sinan'ın kalfalık eseri olarak nitelendirdiği, Kanuni Sultan Süleyman adına yapılan külliye.",
-        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80",
-        url: "https://tr.wikipedia.org/wiki/S%C3%BCleymaniye_Camii"
-      },
-      {
-        id: 4,
-        name: "Alman Çeşmesi",
-        period: "osmanli",
-        type: "sivil",
-        coords: [41.0071, 28.9767],
-        year: "İnşa: M.S. 1901",
-        desc: "Alman İmparatoru II. Wilhelm'in Sultan II. Abdülhamid'e hediyesi olan Neo-Bizans stilindeki çeşme.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Alman_%C3%87e%C5%9Fmesi_2011.jpg/400px-Alman_%C3%87e%C5%9Fmesi_2011.jpg",
-        url: "https://tr.wikipedia.org/wiki/Alman_%C3%87e%C5%9Fmesi"
       }
     ];
 
@@ -523,9 +500,9 @@
     function fetchGoogleSheetsData() {
       const statusEl = document.getElementById('statusIndicator');
 
-      // Eğer URL tanımlanmamışsa yedek örnek verileri gösterir
-      if (!GOOGLE_SHEETS_CSV_URL || GOOGLE_SHEETS_CSV_URL.includes('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv')) {
-        console.warn("Google Sheets CSV URL'si henüz tanımlanmadı. Örnek veriler gösteriliyor.");
+      // BURASI DÜZELTİLDİ: Sadece URL boşsa örnek veriye geçiyor.
+      if (!GOOGLE_SHEETS_CSV_URL) {
+        console.warn("Google Sheets CSV URL'si tanımlanmadı. Örnek veriler gösteriliyor.");
         statusEl.innerHTML = "💡 Örnek Modu (Sheet Bağlanmadı)";
         buildingsData = fallbackBuildings;
         renderMarkers();
