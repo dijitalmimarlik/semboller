@@ -323,7 +323,7 @@
       fill: var(--marker-color);
     }
 
-    /* 🎨 Popup Tasarımı */
+    /* 🎨 Popup ve Tooltip Tasarımı */
     .leaflet-popup-content-wrapper {
       background: #ffffff;
       border-radius: 16px;
@@ -334,6 +334,18 @@
 
     .leaflet-popup-tip {
       background: #ffffff;
+    }
+
+    /* Yeni Eklenen Tooltip (Üzerine Gelince Çıkan İsim) Stili */
+    .leaflet-tooltip {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #0f172a;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      padding: 4px 8px;
     }
 
     .building-card {
@@ -464,7 +476,7 @@
 
     <!-- 3. Yapı Listesi Paneli -->
     <div class="list-panel">
-      <!-- 🎯 ID eklendi, sayı JS ile buraya yazdırılacak -->
+      <!-- ID eklendi, sayı JS ile buraya yazdırılacak -->
       <h2 id="listHeading">📍 Görüntülenen Yapılar: 0 Adet</h2>
       <ul id="buildingList" class="building-list">
         <!-- JS ile dinamik olarak doldurulacak -->
@@ -568,7 +580,7 @@
         `,
         iconSize: [36, 36],
         iconAnchor: [18, 18],
-        popupAnchor: [0, -18]
+        popupAnchor: [0, -18] // Tıklandığında açılan Pop-Up'ın mesafesi
       });
     }
 
@@ -606,9 +618,15 @@
           </div>
         `;
 
+        // 🎯 YENİ EKLENEN KISIM: bindTooltip ile üzerine gelince ismi gösterme
         const marker = L.marker(building.coords, {
           icon: createCustomIcon(building.type)
-        }).bindPopup(popupContent);
+        })
+        .bindTooltip(building.name, {
+          direction: 'top',   // İkonun üstünde belirmesi için
+          offset: [0, -20]    // İkona değmemesi için biraz yukarı kaydırıldı
+        })
+        .bindPopup(popupContent);
 
         markerGroup.addLayer(marker);
         markersMap[building.id] = marker; 
