@@ -709,7 +709,7 @@
       // scale: 3 parametresi görüntünün 3 kat yüksek çözünürlükte (yaklaşık 300dpi kalitesinde) render edilmesini sağlar.
       html2canvas(mapElement, {
         useCORS: true,       // Harici harita sağlayıcısından gelen görsellerin (tile) işlenmesine izin verir
-        scale: 3,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
+        scale: 5,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
         backgroundColor: null 
       }).then(canvas => {
         const link = document.createElement('a');
