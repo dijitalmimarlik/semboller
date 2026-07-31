@@ -267,7 +267,7 @@
       border-bottom: none;
     }
 
-    /* 📌 4. YENİ: Ekran Görüntüsü İndirme Butonu */
+    /* 📌 4. Ekran Görüntüsü İndirme Butonu */
     .download-btn {
       position: absolute;
       top: 80px;
@@ -414,7 +414,7 @@
   <!-- 1. Üst Başlık Çubuğu (Navbar) -->
   <header class="top-navbar">
     <div class="navbar-brand">
-      <span></span> İMÜ İslam Tarihi ve Sanatları Veri Tabanı
+      <span></span> İMÜ İslam Tarihi ve Sanatları
     </div>
     <ul class="navbar-nav">
       <li><a href="#">Ana Sayfa</a></li>
@@ -436,6 +436,7 @@
     <div class="filter-panel">
       <h2>🏛️ Envanter Filtrele</h2>
       
+      <!-- Hata/Yükleniyor durumu için ayrıldı, başarılı olunca JS ile gizlenecek -->
       <div id="statusIndicator" class="status-badge">
         ⏳ Veriler yükleniyor...
       </div>
@@ -463,7 +464,8 @@
 
     <!-- 3. Yapı Listesi Paneli -->
     <div class="list-panel">
-      <h2>📍 Görüntülenen Yapılar</h2>
+      <!-- 🎯 ID eklendi, sayı JS ile buraya yazdırılacak -->
+      <h2 id="listHeading">📍 Görüntülenen Yapılar: 0 Adet</h2>
       <ul id="buildingList" class="building-list">
         <!-- JS ile dinamik olarak doldurulacak -->
       </ul>
@@ -471,7 +473,7 @@
 
   </div>
 
-  <!-- YENİ: Sağ Üst Ekran Görüntüsü Butonu -->
+  <!-- 4. Sağ Üst Ekran Görüntüsü Butonu -->
   <button id="downloadMapBtn" class="download-btn" title="Görünen haritayı yüksek çözünürlüklü indir">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -487,14 +489,14 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- PapaParse CSV Parser JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <!-- YENİ: html2canvas JS (Ekran Görüntüsü İçin) -->
+  <!-- html2canvas JS (Ekran Görüntüsü İçin) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     // 🔗 GOOGLE SHEETS YAYINLANMIŞ CSV BAĞLANTISI
     const GOOGLE_SHEETS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ3u3F319HaiyA8qPzaOI1HFw_I__xfm2QvqtigN0WRQp2K3q-AvQpSNBtDnBkJYKwaKhGJqZTIBGqA/pub?output=csv';
 
-    // 1. Haritayı Başlat
+    // 1. Haritayı Başlat (TÜRKİYE MERKEZLİ - KOORDİNATLAR GÜNCELLENDİ)
     const map = L.map('map', { zoomControl: false }).setView([39.0, 35.2], 6);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -615,10 +617,15 @@
       updateBuildingList(filtered);
     }
 
-    // 6. Sol Menüdeki Listeyi Oluşturan Fonksiyon
+    // 6. Sol Menüdeki Listeyi Oluşturan ve Sayıyı Güncelleyen Fonksiyon
     function updateBuildingList(buildings) {
       const listContainer = document.getElementById('buildingList');
+      const listHeading = document.getElementById('listHeading');
+      
       listContainer.innerHTML = ''; 
+
+      // Başlıktaki sayı güncelleniyor
+      listHeading.innerHTML = `📍 Görüntülenen Yapılar: ${buildings.length} Adet`;
 
       if (buildings.length === 0) {
         listContainer.innerHTML = '<li style="cursor:default; background:transparent;">Eşleşen yapı bulunamadı.</li>';
@@ -630,7 +637,7 @@
         li.textContent = building.name;
         
         li.onclick = () => {
-          map.flyTo(building.coords, 17, {
+          map.flyTo(building.coords, 15, {
             animate: true,
             duration: 1.2 
           });
@@ -646,7 +653,7 @@
       });
     }
 
-    // 7. Google Sheets Verisini Çekme
+    // 7. Google Sheets Verisini Çekme (Başarılı yüklemede uyarıyı gizler)
     function fetchGoogleSheetsData() {
       const statusEl = document.getElementById('statusIndicator');
 
@@ -676,10 +683,12 @@
               url: row.url ? row.url.trim() : '#'
             })).filter(b => !isNaN(b.coords[0]) && !isNaN(b.coords[1]));
 
-            statusEl.className = "status-badge live";
-            statusEl.innerHTML = `🟢 Canlı Veri (${buildingsData.length} Yapı Yüklendi)`;
+            // Veri başarıyla yüklendiğinde yükleniyor yazısını/kutusunu gizle
+            statusEl.style.display = 'none';
             renderMarkers();
           } else {
+            // Hata durumunda görünür yap
+            statusEl.style.display = 'flex';
             statusEl.innerHTML = "⚠️ Tablo Boş veya Okunamadı";
             buildingsData = fallbackBuildings;
             renderMarkers();
@@ -687,6 +696,8 @@
         },
         error: function(err) {
           console.error("Google Sheets Okuma Hatası:", err);
+          // Hata durumunda görünür yap
+          statusEl.style.display = 'flex';
           statusEl.innerHTML = "❌ Canlı Veri Bağlantı Hatası";
           buildingsData = fallbackBuildings;
           renderMarkers();
@@ -694,37 +705,32 @@
       });
     }
 
-    // 8. YENİ: Haritayı Yüksek Çözünürlüklü Kaydetme Fonksiyonu
+    // 8. Haritayı Yüksek Çözünürlüklü Kaydetme Fonksiyonu
     document.getElementById('downloadMapBtn').addEventListener('click', function() {
       const btn = this;
       const originalHTML = btn.innerHTML;
       
-      // Butonu bekleme moduna al
       btn.innerHTML = '⏳ İşleniyor...';
       btn.style.pointerEvents = 'none';
 
       const mapElement = document.getElementById('map');
 
-      // html2canvas ile sadece #map div'ini hedefliyoruz.
-      // scale: 3 parametresi görüntünün 3 kat yüksek çözünürlükte (yaklaşık 300dpi kalitesinde) render edilmesini sağlar.
       html2canvas(mapElement, {
-        useCORS: true,       // Harici harita sağlayıcısından gelen görsellerin (tile) işlenmesine izin verir
-        scale: 5,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
+        useCORS: true,       
+        scale: 3,            
         backgroundColor: null 
       }).then(canvas => {
         const link = document.createElement('a');
-        link.download = 'kultur-envanteri-haritasi.png'; // İndirilecek dosyanın adı
+        link.download = 'kultur-envanteri-haritasi.png'; 
         link.href = canvas.toDataURL('image/png');
         link.click();
         
-        // İşlem bitince butonu eski haline getir
         btn.innerHTML = originalHTML;
         btn.style.pointerEvents = 'auto';
       }).catch(err => {
         console.error('Ekran görüntüsü alınamadı:', err);
         alert('Harita kaydedilirken bir hata oluştu.');
         
-        // Hata durumunda butonu eski haline getir
         btn.innerHTML = originalHTML;
         btn.style.pointerEvents = 'auto';
       });
