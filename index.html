@@ -206,7 +206,7 @@
       color: #15803d;
     }
 
-    /* 📌 3. Yeni: Yapı Listesi Paneli */
+    /* 📌 3. Yapı Listesi Paneli */
     .list-panel {
       background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(16px);
@@ -218,7 +218,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 38vh; /* Sayfaya sığması için maksimum yükseklik */
+      max-height: 38vh;
     }
 
     .list-panel h2 {
@@ -238,7 +238,6 @@
       padding-right: 10px;
     }
 
-    /* Özel Scrollbar Tasarımı */
     .building-list::-webkit-scrollbar {
       width: 6px;
     }
@@ -266,6 +265,38 @@
 
     .building-list li:last-child {
       border-bottom: none;
+    }
+
+    /* 📌 4. YENİ: Ekran Görüntüsü İndirme Butonu */
+    .download-btn {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      z-index: 1000;
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s ease;
+    }
+
+    .download-btn:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px -5px rgba(37, 99, 235, 0.3);
+    }
+
+    .download-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     /* 📍 Özel SVG İkon Stilleri */
@@ -430,7 +461,7 @@
       </div>
     </div>
 
-    <!-- 3. Yeni: Yapı Listesi Paneli -->
+    <!-- 3. Yapı Listesi Paneli -->
     <div class="list-panel">
       <h2>📍 Görüntülenen Yapılar</h2>
       <ul id="buildingList" class="building-list">
@@ -440,6 +471,15 @@
 
   </div>
 
+  <!-- YENİ: Sağ Üst Ekran Görüntüsü Butonu -->
+  <button id="downloadMapBtn" class="download-btn" title="Görünen haritayı yüksek çözünürlüklü indir">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+      <circle cx="12" cy="13" r="4"></circle>
+    </svg>
+    Haritayı Kaydet
+  </button>
+
   <!-- Harita Konteyneri -->
   <div id="map"></div>
 
@@ -447,6 +487,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <!-- PapaParse CSV Parser JS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- YENİ: html2canvas JS (Ekran Görüntüsü İçin) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <script>
     // 🔗 GOOGLE SHEETS YAYINLANMIŞ CSV BAĞLANTISI
@@ -505,23 +547,12 @@
         desc: "Cenevizliler tarafından Galata surlarının bir parçası ve gözetleme kulesi olarak inşa edilmiştir.",
         image: "https://images.unsplash.com/photo-1527838832700-54595d2f408e?auto=format&fit=crop&w=400&q=80",
         url: "https://tr.wikipedia.org/wiki/Galata_Kulesi"
-      },
-      {
-        id: 3,
-        name: "Süleymaniye Camii",
-        period: "osmanli",
-        type: "dini",
-        coords: [41.0161, 28.9639],
-        year: "İnşa: M.S. 1557",
-        desc: "Mimar Sinan'ın kalfalık eseri olarak nitelendirdiği şaheser.",
-        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=400&q=80",
-        url: "#"
       }
     ];
 
     let buildingsData = [];
     let markerGroup = L.layerGroup().addTo(map);
-    let markersMap = {}; // Tıklanan yapının popup'ını açmak için markerları ID ile saklayacağımız obje
+    let markersMap = {}; 
 
     // 4. Özel İkon Fonksiyonu
     function createCustomIcon(type) {
@@ -542,22 +573,19 @@
     // 5. Marker Çizme & Filtreleme & Listeyi Güncelleme
     function renderMarkers() {
       markerGroup.clearLayers();
-      markersMap = {}; // Harita her temizlendiğinde marker haritasını da sıfırla
+      markersMap = {}; 
 
       const selectedPeriod = document.getElementById('periodSelect').value;
       const selectedType = document.getElementById('typeSelect').value;
 
-      // Veriyi filtrele
       let filtered = buildingsData.filter(b => {
         const periodMatch = (selectedPeriod === 'all') || (b.period === selectedPeriod);
         const typeMatch = (selectedType === 'all') || (b.type === selectedType);
         return periodMatch && typeMatch;
       });
 
-      // İsme göre A'dan Z'ye sırala (Türkçe karakterlere uygun şekilde)
       filtered.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 
-      // Haritaya markerları ekle
       filtered.forEach(building => {
         const config = categoryConfig[building.type] || categoryConfig.sivil;
         
@@ -581,17 +609,16 @@
         }).bindPopup(popupContent);
 
         markerGroup.addLayer(marker);
-        markersMap[building.id] = marker; // Markerı ID ile kaydet (Listeye tıklandığında popup açabilmek için)
+        markersMap[building.id] = marker; 
       });
 
-      // Sol menüdeki listeyi güncelle
       updateBuildingList(filtered);
     }
 
     // 6. Sol Menüdeki Listeyi Oluşturan Fonksiyon
     function updateBuildingList(buildings) {
       const listContainer = document.getElementById('buildingList');
-      listContainer.innerHTML = ''; // Önceki listeyi temizle
+      listContainer.innerHTML = ''; 
 
       if (buildings.length === 0) {
         listContainer.innerHTML = '<li style="cursor:default; background:transparent;">Eşleşen yapı bulunamadı.</li>';
@@ -602,15 +629,12 @@
         const li = document.createElement('li');
         li.textContent = building.name;
         
-        // Listeden bir isme tıklandığında yapılacaklar:
         li.onclick = () => {
-          // Haritayı yapının olduğu konuma animasyonla götür ve yakınlaştır (zoom: 16 ~ 5km ölçeği)
           map.flyTo(building.coords, 15, {
             animate: true,
-            duration: 1.2 // 1.2 saniyelik animasyon
+            duration: 1.2 
           });
           
-          // Uçuş bittiğinde o yapının bilgi baloncuğunu(popup) aç
           setTimeout(() => {
             if(markersMap[building.id]) {
               markersMap[building.id].openPopup();
@@ -622,7 +646,7 @@
       });
     }
 
-    // 7. Google Sheets Verisini Çekme (PapaParse)
+    // 7. Google Sheets Verisini Çekme
     function fetchGoogleSheetsData() {
       const statusEl = document.getElementById('statusIndicator');
 
@@ -641,7 +665,7 @@
         complete: function(results) {
           if (results.data && results.data.length > 0) {
             buildingsData = results.data.map((row, index) => ({
-              id: index + 1, // Benzersiz ID veriyoruz
+              id: index + 1, 
               name: row.name ? row.name.trim() : 'İsimsiz Yapı',
               period: row.period ? row.period.trim().toLowerCase() : 'diğer',
               type: row.type ? row.type.trim().toLowerCase() : 'sivil',
@@ -670,7 +694,43 @@
       });
     }
 
-    // 8. Etkinlik Dinleyicileri (Filtreleme)
+    // 8. YENİ: Haritayı Yüksek Çözünürlüklü Kaydetme Fonksiyonu
+    document.getElementById('downloadMapBtn').addEventListener('click', function() {
+      const btn = this;
+      const originalHTML = btn.innerHTML;
+      
+      // Butonu bekleme moduna al
+      btn.innerHTML = '⏳ İşleniyor...';
+      btn.style.pointerEvents = 'none';
+
+      const mapElement = document.getElementById('map');
+
+      // html2canvas ile sadece #map div'ini hedefliyoruz.
+      // scale: 3 parametresi görüntünün 3 kat yüksek çözünürlükte (yaklaşık 300dpi kalitesinde) render edilmesini sağlar.
+      html2canvas(mapElement, {
+        useCORS: true,       // Harici harita sağlayıcısından gelen görsellerin (tile) işlenmesine izin verir
+        scale: 5,            // Çözünürlük çarpanı (daha yüksek kalite için artırabilirsiniz)
+        backgroundColor: null 
+      }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'kultur-envanteri-haritasi.png'; // İndirilecek dosyanın adı
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        
+        // İşlem bitince butonu eski haline getir
+        btn.innerHTML = originalHTML;
+        btn.style.pointerEvents = 'auto';
+      }).catch(err => {
+        console.error('Ekran görüntüsü alınamadı:', err);
+        alert('Harita kaydedilirken bir hata oluştu.');
+        
+        // Hata durumunda butonu eski haline getir
+        btn.innerHTML = originalHTML;
+        btn.style.pointerEvents = 'auto';
+      });
+    });
+
+    // 9. Etkinlik Dinleyicileri (Filtreleme)
     document.getElementById('periodSelect').addEventListener('change', renderMarkers);
     document.getElementById('typeSelect').addEventListener('change', renderMarkers);
 
